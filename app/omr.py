@@ -70,6 +70,7 @@ MIN_BUBBLE_SCORE = 0.24
 MULTIPLE_RELATIVE_SCORE = 0.68
 AMBIGUITY_GAP = 0.07
 MARKER_POSITION_TOLERANCE_PX = 30
+AUTO_CALIBRATION_MIN_CONFIDENCE = 55.0
 
 
 class OMRScanError(Exception):
@@ -175,6 +176,80 @@ def _select_four(candidates):
     if max(top, bottom) / min(top, bottom) > 1.5 or max(left, right) / min(left, right) > 1.5:
         raise OMRScanError("Registration-marker geometry is invalid.")
     return corners
+
+
+def auto_calibrate(image, paper_size="A4"):
+    """Automatically calibrate a camera/photo before reading bubbles.
+
+    The four printed registration markers are used as a scale- and
+    perspective-independent reference. This means the phone can photograph
+    the sheet at an angle, from a different distance, or with mild rotation;
+    all answer coordinates are then mapped into the exact canonical layout.
+    """
+    key, config = _config(paper_size)
+    if image is None or image.size == 0:
+        raise OMRScanError("Calibration received an empty image.")
+
+    markers = _select_four(_find_marker_candidates(image))
+
+    # Source marker geometry in the photo.
+    tl, tr, br, bl = markers
+    width_top = float(np.linalg.norm(tr - tl))
+    width_bottom = float(np.linalg.norm(br - bl))
+    height_left = float(np.linalg.norm(bl - tl))
+    height_right = float(np.linalg.norm(br - tr))
+
+    # Reject photos where the page is too distorted or markers are likely
+    # false positives.
+    width_ratio = min(width_top, width_bottom) / max(width_top, width_bottom)
+    height_ratio = min(height_left, height_right) / max(height_left, height_right)
+    if width_ratio < 0.55 or height_ratio < 0.55:
+        raise OMRScanError(
+            "Auto-calibration failed: the paper is too distorted. "
+            "Move the camera farther away and keep the whole page visible."
+        )
+
+    dst0 = _marker_centers(key)
+    dst = np.float32([dst0[0], dst0[1], dst0[3], dst0[2]])
+    matrix = cv2.getPerspectiveTransform(markers, dst)
+
+    # Reproject the detected markers and calculate calibration error.
+    projected = cv2.perspectiveTransform(
+        markers.reshape(-1, 1, 2), matrix
+    ).reshape(-1, 2)
+    errors = np.linalg.norm(projected - dst, axis=1)
+    mean_error = float(np.mean(errors))
+    max_error = float(np.max(errors))
+
+    # Confidence combines marker geometry and reprojection accuracy.
+    geometry_score = min(width_ratio, height_ratio) * 100.0
+    error_score = max(0.0, 100.0 - (mean_error * 2.0))
+    confidence = round(min(100.0, (geometry_score * 0.6) + (error_score * 0.4)), 2)
+
+    if confidence < AUTO_CALIBRATION_MIN_CONFIDENCE:
+        raise OMRScanError(
+            f"Auto-calibration confidence is too low ({confidence:.1f}%). "
+            "Make sure all four black corner markers are visible."
+        )
+
+    page_w, page_h = config["canvas"]
+    # The visible paper corners in the source image are estimated from the
+    # registration-marker rectangle. These are useful to the UI/debug output.
+    source_corners = np.array(
+        [[tl[0], tl[1]], [tr[0], tr[1]], [br[0], br[1]], [bl[0], bl[1]]],
+        dtype=np.float32,
+    )
+
+    return {
+        "paper_size": key,
+        "homography": matrix,
+        "markers": markers,
+        "source_corners": source_corners,
+        "canonical_size": {"width": page_w, "height": page_h},
+        "mean_error_px": round(mean_error, 2),
+        "max_error_px": round(max_error, 2),
+        "confidence": confidence,
+    }
 
 
 def _warp(image, markers, paper_size):
@@ -283,9 +358,17 @@ def scan_answer_sheet(image_path, quiz, paper_size="A4"):
             f"{key} answer sheet supports at most {c['max_questions']} questions."
         )
 
-    markers = _select_four(_find_marker_candidates(image))
-    warped = _warp(image, markers, key)
+    calibration = auto_calibrate(image, key)
+    warped = cv2.warpPerspective(
+        image,
+        calibration["homography"],
+        c["canvas"],
+    )
     geometry_confidence = _validate_warp(warped, key)
+    # Use the stricter of marker-based and image-content validation.
+    geometry_confidence = round(
+        min(float(geometry_confidence), float(calibration["confidence"])), 2
+    )
     gray = cv2.GaussianBlur(cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY), (3, 3), 0)
 
     answers = []
@@ -324,6 +407,12 @@ def scan_answer_sheet(image_path, quiz, paper_size="A4"):
         "percentage": percentage,
         "needs_review": needs_review,
         "geometry_confidence": geometry_confidence,
+        "calibration": {
+            "confidence": calibration["confidence"],
+            "mean_error_px": calibration["mean_error_px"],
+            "max_error_px": calibration["max_error_px"],
+            "paper_size": calibration["paper_size"],
+        },
         "message": (
             f"{key} scan completed. Some answers require teacher review."
             if needs_review
