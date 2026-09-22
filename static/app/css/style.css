@@ -30,3 +30,9 @@ input{display:block;width:100%;max-width:500px;padding:10px;margin-top:6px;borde
 table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{padding:9px;border-bottom:1px solid #e4e8ef;text-align:left}
 @media(max-width:700px){.container{padding:0 12px}.admin{display:none}.card{padding:16px}.paper-guide{height:90%;border-width:2px}.guide-label{font-size:9px}}
+
+.calibration-status{display:flex;align-items:center;gap:8px;width:max-content;padding:7px 10px;border-radius:999px;background:#eef2f7;color:#4b5563;font-size:13px;font-weight:700;margin:8px 0}
+.calibration-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;display:inline-block}
+.calibration-status.calibrated{background:#e6f7ec;color:#16723b}
+.calibration-status.calibrated .calibration-dot{background:#16a34a}
+.paper-detected .paper-guide{border-color:#16a34a;box-shadow:0 0 0 9999px rgba(0,0,0,.30),0 0 18px rgba(22,163,74,.65)}
