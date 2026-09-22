@@ -15,7 +15,8 @@
 </div>
 <canvas id="canvas" hidden></canvas>
 </div>
-<p class="guide-help">Align the physical paper edges with the guide. Keep the four printed black corner markers inside the frame.</p>
+<div class="calibration-status" id="calibrationStatus"><span class="calibration-dot"></span><span id="calibrationText">Waiting for paper...</span></div>
+<p class="guide-help">Auto-calibration detects the four black registration markers and corrects perspective, rotation, scale, and mild camera angle automatically.</p>
 <button class="button" type="button" id="capture">Capture &amp; Check</button>
 <label class="button secondary file">Choose Image<input id="file" type="file" accept="image/*" capture="environment"></label>
 <p id="status"></p>
@@ -26,6 +27,49 @@ const v=document.getElementById("video");
 const c=document.getElementById("canvas");
 const s=document.getElementById("status");
 const f=document.getElementById("scanForm");
+const cameraBox=document.getElementById("camera");
+const calibrationStatus=document.getElementById("calibrationStatus");
+const calibrationText=document.getElementById("calibrationText");
+let calibrated=false;
+let calibrationBusy=false;
+let calibrationTimer=null;
+
+function setCalibration(text,ok=false){
+  calibrationText.textContent=text;
+  calibrationStatus.classList.toggle("calibrated",ok);
+  calibrated=ok;
+}
+
+async function autoCalibrateFrame(){
+  if(calibrationBusy || !v.videoWidth) return;
+  calibrationBusy=true;
+  const temp=document.createElement("canvas");
+  temp.width=Math.min(v.videoWidth,1600);
+  temp.height=Math.round(v.videoHeight*(temp.width/v.videoWidth));
+  temp.getContext("2d").drawImage(v,0,0,temp.width,temp.height);
+  temp.toBlob(async blob=>{
+    try{
+      const d=new FormData();
+      d.append("image",blob,"calibration.jpg");
+      d.append("paper_size",f.paper_size.value);
+      const r=await fetch("{% url 'app:camera_calibrate' quiz.id %}",{
+        method:"POST",body:d,
+        headers:{"X-CSRFToken":document.querySelector("[name=csrfmiddlewaretoken]").value}
+      });
+      const x=await r.json();
+      if(x.ok){
+        setCalibration("Paper detected • "+x.confidence+"% calibrated",true);
+        cameraBox.classList.add("paper-detected");
+      }else{
+        setCalibration(x.error||"Align all 4 corner markers");
+        cameraBox.classList.remove("paper-detected");
+      }
+    }catch(e){
+      setCalibration("Move camera until all 4 markers are visible");
+      cameraBox.classList.remove("paper-detected");
+    }finally{ calibrationBusy=false; }
+  },"image/jpeg",.72);
+}
 
 async function camera(){
   try{
@@ -33,7 +77,10 @@ async function camera(){
       video:{facingMode:{ideal:"environment"},width:{ideal:4032},height:{ideal:3024}},
       audio:false
     });
-  }catch(e){s.textContent="Camera unavailable; use Choose Image.";}
+  }catch(e){s.textContent="Camera unavailable; use Choose Image.";return;}
+  clearInterval(calibrationTimer);
+  calibrationTimer=setInterval(autoCalibrateFrame,900);
+  setTimeout(autoCalibrateFrame,500);
 }
 
 async function send(blob){
@@ -52,6 +99,7 @@ async function send(blob){
 
 document.getElementById("capture").onclick=()=>{
   if(!v.videoWidth){s.textContent="Camera not ready.";return;}
+  if(!calibrated){s.textContent="Wait for auto-calibration to detect the paper.";return;}
   c.width=v.videoWidth;
   c.height=v.videoHeight;
   c.getContext("2d").drawImage(v,0,0);
