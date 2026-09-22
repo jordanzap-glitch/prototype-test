@@ -3,7 +3,7 @@
 @page{size:{{ paper_size }} portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;font-family:Arial,sans-serif;color:#000}
 .sheet{position:relative;overflow:hidden}
 {% if paper_size == "SHORT" %}
-html,body,.sheet{width:215.9mm;height:279.4mm}.marker{width:5mm;height:5mm;background:#000;position:absolute}
+@page{size:215.9mm 279.4mm;margin:0}html,body,.sheet{width:215.9mm;height:279.4mm}.marker{width:5mm;height:5mm;background:#000;position:absolute}
 .tl{left:5mm;top:5mm}.tr{left:205.9mm;top:5mm}.bl{left:5mm;top:264.4mm}.br{left:205.9mm;top:264.4mm}
 h1{position:absolute;top:8mm;left:0;width:215.9mm;text-align:center;font-size:15pt;margin:0}
 .meta{position:absolute;top:17mm;left:22mm;font-size:9pt}.meta .name-label{font-weight:600}.line{display:inline-block;width:60mm;border-bottom:.3mm solid #000}
@@ -13,12 +13,12 @@ h1{position:absolute;top:8mm;left:0;width:215.9mm;text-align:center;font-size:15
 .side-label{position:absolute;font-weight:bold;font-size:10pt;letter-spacing:.5px}.zip{left:3mm;top:66mm;writing-mode:vertical-rl;transform:rotate(180deg)}.me{right:3mm;top:86mm;writing-mode:vertical-rl}.src{right:3mm;top:147mm;writing-mode:vertical-rl}.code{right:4mm;top:43mm;writing-mode:vertical-rl}
 
 {% elif paper_size == "HALF_LETTER" %}
-html,body,.sheet{width:139.7mm;height:215.9mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:5mm;top:5mm}.tr{left:128.7mm;top:5mm}.bl{left:5mm;top:204.9mm}.br{left:128.7mm;top:204.9mm}
+@page{size:139.7mm 215.9mm;margin:0}html,body,.sheet{width:139.7mm;height:215.9mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:5mm;top:5mm}.tr{left:128.7mm;top:5mm}.bl{left:5mm;top:204.9mm}.br{left:128.7mm;top:204.9mm}
 h1{position:absolute;top:18mm;left:0;width:139.7mm;text-align:center;font-size:12pt;margin:0}.meta{position:absolute;top:29mm;left:16mm;font-size:7pt}.line{display:inline-block;width:38mm;border-bottom:.3mm solid #000}.instructions{position:absolute;top:37mm;left:16mm;font-size:6.5pt}
 .column{position:absolute;top:49mm;left:49mm;width:40mm}.choice-header{position:absolute;top:-4mm;left:0;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);text-align:center;font-size:7pt;font-weight:bold}.row{height:6.4mm;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);align-items:center}.bubble{width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%;margin:auto}.number{position:absolute;width:8mm;text-align:right;left:-9mm;font-size:6.5pt}.footer{position:absolute;bottom:5mm;left:0;width:139.7mm;text-align:center;font-size:6pt}
 
 {% else %}
-html,body,.sheet{width:210mm;height:297mm}.marker{position:absolute;width:8mm;height:8mm;background:#000}.tl{left:10mm;top:10mm}.tr{left:192mm;top:10mm}.bl{left:10mm;top:279mm}.br{left:192mm;top:279mm}
+@page{size:210mm 297mm;margin:0}html,body,.sheet{width:210mm;height:297mm}.marker{position:absolute;width:8mm;height:8mm;background:#000}.tl{left:10mm;top:10mm}.tr{left:192mm;top:10mm}.bl{left:10mm;top:279mm}.br{left:192mm;top:279mm}
 h1{position:absolute;top:31mm;left:0;width:210mm;text-align:center;font-size:16pt;margin:0}.meta{position:absolute;top:43mm;left:25mm;font-size:10pt}.line{display:inline-block;width:60mm;border-bottom:.3mm solid #000}.instructions{position:absolute;top:52mm;left:25mm;font-size:8pt}
 .column{position:absolute;top:71mm;width:40mm}.left{left:40mm}.right{left:130mm}.choice-header{position:absolute;top:-5mm;left:0;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);text-align:center;font-size:8pt;font-weight:bold}.row{height:8mm;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);align-items:center}.bubble{width:7mm;height:7mm;border:.35mm solid #000;border-radius:50%;margin:auto}.number{position:absolute;width:9mm;text-align:right;font-size:8pt}.left .number,.right .number{left:-10mm}.footer{position:absolute;bottom:18mm;left:0;width:210mm;text-align:center;font-size:7pt}
 {% endif %}@media print{.no-print{display:none}}
