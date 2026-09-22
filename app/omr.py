@@ -11,12 +11,12 @@ PAPER_CONFIG={
           "left_x":{"A":45,"B":55,"C":65,"D":75},"right_x":{"A":135,"B":145,"C":155,"D":165},
           "max_questions":50},
     "SHORT":{"canvas":(2550,3300),"markers":[(12,12),(203.9,12),(203.9,267.4),(12,267.4)],
-             "first_y":58,"row_spacing":7.4,"sample_radius":24,
-             "left_x":{"A":73,"B":83,"C":93,"D":103},"right_x":{"A":73,"B":83,"C":93,"D":103},
+             "first_y":61.7,"row_spacing":7.4,"sample_radius":24,
+             "left_x":{"A":88,"B":98,"C":108,"D":118},"right_x":{"A":88,"B":98,"C":108,"D":118},
              "max_questions":25},
     "HALF_LETTER":{"canvas":(1650,2550),"markers":[(8,8),(132,8),(132,208),(8,208)],
-             "first_y":55,"row_spacing":6.4,"sample_radius":20,
-             "left_x":{"A":53,"B":63,"C":73,"D":83},"right_x":{"A":53,"B":63,"C":73,"D":83},
+             "first_y":52.2,"row_spacing":6.4,"sample_radius":20,
+             "left_x":{"A":54,"B":64,"C":74,"D":84},"right_x":{"A":54,"B":64,"C":74,"D":84},
              "max_questions":25},
 }
 CHOICES=("A","B","C","D")
