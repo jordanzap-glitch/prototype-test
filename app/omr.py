@@ -1,32 +1,51 @@
-"""Fixed-layout 50-question A4 OMR scanner."""
+"""Fixed-layout Short Bond/A4 OMR scanner."""
 from pathlib import Path
 import cv2
 import numpy as np
 
 DPI=300
 PX_PER_MM=DPI/25.4
-CANVAS_SIZE=(2480,3508)
-MARKER_CENTERS=np.float32([[14*PX_PER_MM,14*PX_PER_MM],[196*PX_PER_MM,14*PX_PER_MM],
- [196*PX_PER_MM,283*PX_PER_MM],[14*PX_PER_MM,283*PX_PER_MM]])
-LEFT_X_MM={"A":45,"B":55,"C":65,"D":75}
-RIGHT_X_MM={"A":135,"B":145,"C":155,"D":165}
+PAPER_CONFIG={
+    "A4":{"canvas":(2480,3508),"markers":[(14,14),(196,14),(196,283),(14,283)],
+          "first_y":75,"row_spacing":8,"sample_radius":24,
+          "left_x":{"A":45,"B":55,"C":65,"D":75},"right_x":{"A":135,"B":145,"C":155,"D":165},
+          "max_questions":50},
+    "SHORT":{"canvas":(2550,3300),"markers":[(12,12),(203.9,12),(203.9,267.4),(12,267.4)],
+             "first_y":58,"row_spacing":7.4,"sample_radius":24,
+             "left_x":{"A":73,"B":83,"C":93,"D":103},"right_x":{"A":73,"B":83,"C":93,"D":103},
+             "max_questions":25},
+    "HALF_LETTER":{"canvas":(1650,2550),"markers":[(8,8),(132,8),(132,208),(8,208)],
+             "first_y":55,"row_spacing":6.4,"sample_radius":20,
+             "left_x":{"A":53,"B":63,"C":73,"D":83},"right_x":{"A":53,"B":63,"C":73,"D":83},
+             "max_questions":25},
+}
 CHOICES=("A","B","C","D")
-FIRST_ROW_Y_MM=75
-ROW_SPACING_MM=8
-BUBBLE_SAMPLE_RADIUS_PX=24
 MIN_BUBBLE_SCORE=.18
 AMBIGUITY_GAP=.07
 MARKER_POSITION_TOLERANCE_PX=30
 
 class OMRScanError(Exception): pass
 
+def _config(paper_size):
+    key=str(paper_size or "A4").upper()
+    if key in {"SHORT BOND","SHORT_BOND","LETTER"}: key="SHORT"
+    if key in {"HALF LETTER","HALF-LETTER","HALF_LETTER","HALF"}: key="HALF_LETTER"
+    if key not in PAPER_CONFIG: raise OMRScanError("Unsupported answer-sheet size.")
+    return key,PAPER_CONFIG[key]
+
 def mm_to_px(value): return round(value*PX_PER_MM)
 
-def bubble_center(question_number,choice):
-    if not 1<=question_number<=50 or choice not in CHOICES: raise ValueError("Invalid OMR coordinate.")
-    xs=LEFT_X_MM if question_number<=25 else RIGHT_X_MM
-    row=question_number-1 if question_number<=25 else question_number-26
-    return mm_to_px(xs[choice]),mm_to_px(FIRST_ROW_Y_MM+row*ROW_SPACING_MM)
+def bubble_center(question_number,choice,paper_size="A4"):
+    key,c=_config(paper_size)
+    if not 1<=question_number<=c["max_questions"] or choice not in CHOICES:
+        raise ValueError("Invalid OMR coordinate.")
+    row=question_number-1 if key in {"SHORT","HALF_LETTER"} or question_number<=25 else question_number-26
+    xs=c["left_x"] if key in {"SHORT","HALF_LETTER"} or question_number<=25 else c["right_x"]
+    return mm_to_px(xs[choice]),mm_to_px(c["first_y"]+row*c["row_spacing"])
+
+def _marker_centers(paper_size):
+    _,c=_config(paper_size)
+    return np.float32([[x*PX_PER_MM,y*PX_PER_MM] for x,y in c["markers"]])
 
 def _find_marker_candidates(image):
     gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
@@ -41,7 +60,7 @@ def _find_marker_candidates(image):
         if not peri: continue
         poly=cv2.approxPolyDP(c,.04*peri,True)
         if len(poly)!=4 or not cv2.isContourConvex(poly): continue
-        x,y,bw,bh=cv2.boundingRect(poly); ratio=bw/max(bh,1); fill=area/max(bw*bh,1)
+        _,_,bw,bh=cv2.boundingRect(poly); ratio=bw/max(bh,1); fill=area/max(bw*bh,1)
         if .70<=ratio<=1.30 and fill>=.55:
             out.append(poly.reshape(4,2).mean(axis=0).astype(np.float32))
     return out
@@ -60,36 +79,42 @@ def _select_four(candidates):
         raise OMRScanError("Registration-marker geometry is invalid.")
     return corners
 
-def _warp(image,markers):
-    dst=np.float32([MARKER_CENTERS[0],MARKER_CENTERS[1],MARKER_CENTERS[3],MARKER_CENTERS[2]])
+def _warp(image,markers,paper_size):
+    dst0=_marker_centers(paper_size)
+    dst=np.float32([dst0[0],dst0[1],dst0[3],dst0[2]])
     matrix=cv2.getPerspectiveTransform(markers,dst)
-    warped=cv2.warpPerspective(image,matrix,CANVAS_SIZE)
+    _,c=_config(paper_size)
+    warped=cv2.warpPerspective(image,matrix,c["canvas"])
     projected=cv2.perspectiveTransform(markers.reshape(-1,1,2),matrix).reshape(-1,2)
     errors=np.linalg.norm(projected-dst,axis=1)
-    if float(errors.max())>MARKER_POSITION_TOLERANCE_PX: raise OMRScanError("Perspective correction error is too large.")
+    if float(errors.max())>MARKER_POSITION_TOLERANCE_PX:
+        raise OMRScanError("Perspective correction error is too large.")
     return warped
 
-def _validate_warp(warped):
-    if warped.shape[:2]!=(3508,2480): raise OMRScanError("Invalid canonical page size.")
+def _validate_warp(warped,paper_size):
+    _,c=_config(paper_size)
+    expected=(c["canvas"][1],c["canvas"][0])
+    if warped.shape[:2]!=expected: raise OMRScanError("Invalid canonical page size.")
     gray=cv2.cvtColor(warped,cv2.COLOR_BGR2GRAY); scores=[]
-    for cx,cy in MARKER_CENTERS:
-        x1,y1=int(cx-35),int(cy-35); x2,y2=int(cx+35),int(cy+35)
-        roi=gray[y1:y2,x1:x2]
+    for cx,cy in _marker_centers(paper_size):
+        r=35
+        roi=gray[max(0,int(cy-r)):min(gray.shape[0],int(cy+r)),
+                 max(0,int(cx-r)):min(gray.shape[1],int(cx+r))]
         if roi.size==0: raise OMRScanError("Registration marker region is missing.")
         darkness=1-float(np.mean(roi))/255
         scores.append(darkness)
         if darkness<.45: raise OMRScanError("A registration marker is not visible.")
     return round(float(np.mean(scores))*100,2)
 
-def _bubble_score(gray,cx,cy):
-    r=BUBBLE_SAMPLE_RADIUS_PX
+def _bubble_score(gray,cx,cy,paper_size):
+    _,c=_config(paper_size); r=c["sample_radius"]
     roi=gray[cy-r:cy+r+1,cx-r:cx+r+1]
     if roi.size==0:return 0
     yy,xx=np.ogrid[-r:r+1,-r:r+1]; mask=(xx*xx+yy*yy)<=r*r
     return float(1-np.mean(roi[mask])/255)
 
-def _read_question(gray,n):
-    scores={c:round(_bubble_score(gray,*bubble_center(n,c)),4) for c in CHOICES}
+def _read_question(gray,n,paper_size):
+    scores={c:round(_bubble_score(gray,*bubble_center(n,c,paper_size),paper_size),4) for c in CHOICES}
     ranked=sorted(scores.items(),key=lambda x:x[1],reverse=True)
     marked=[c for c,s in ranked if s>=MIN_BUBBLE_SCORE]
     top,top_score=ranked[0]; second_score=ranked[1][1]
@@ -100,20 +125,23 @@ def _read_question(gray,n):
     return {"selected_choice":selected,"detected_choices":marked,"status":status,
             "confidence":round(confidence,2),"darkness_scores":scores}
 
-def scan_answer_sheet(image_path,quiz):
+def scan_answer_sheet(image_path,quiz,paper_size="A4"):
+    key,c=_config(paper_size)
     if not Path(image_path).exists(): raise OMRScanError("Uploaded image was not found.")
     image=cv2.imread(image_path)
     if image is None: raise OMRScanError("OpenCV could not decode the image.")
     questions=list(quiz.questions.all())
     if not questions: raise OMRScanError("This quiz has no questions.")
-    if len(questions)>50: raise OMRScanError("The fixed A4 sheet supports at most 50 questions.")
+    if len(questions)>c["max_questions"]: raise OMRScanError(f"{key} answer sheet supports at most {c['max_questions']} questions.")
+    if key in {"SHORT","HALF_LETTER"} and any(q.number>25 for q in questions):
+        raise OMRScanError(f"{key} answer sheets use question numbers 1–25.")
     markers=_select_four(_find_marker_candidates(image))
-    warped=_warp(image,markers)
-    geometry_confidence=_validate_warp(warped)
+    warped=_warp(image,markers,key)
+    geometry_confidence=_validate_warp(warped,key)
     gray=cv2.GaussianBlur(cv2.cvtColor(warped,cv2.COLOR_BGR2GRAY),(3,3),0)
     answers=[]; score=0; needs_review=False
     for q in questions:
-        d=_read_question(gray,q.number); status=d["status"]; selected=d["selected_choice"]
+        d=_read_question(gray,q.number,key); status=d["status"]; selected=d["selected_choice"]
         if status=="detected":
             status="correct" if selected==q.correct_choice else "incorrect"
             correct=status=="correct"; score+=int(correct)
@@ -124,4 +152,5 @@ def scan_answer_sheet(image_path,quiz):
     total=len(answers); percentage=round(score/total*100,2) if total else 0
     return {"answers":answers,"score":score,"total_items":total,"percentage":percentage,
             "needs_review":needs_review,"geometry_confidence":geometry_confidence,
-            "message":"Scan completed. Some answers require teacher review." if needs_review else "Scan completed successfully."}
+            "message":f"{key} scan completed. Some answers require teacher review." if needs_review else f"{key} scan completed successfully.",
+            "paper_size":key}
