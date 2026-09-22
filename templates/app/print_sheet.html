@@ -1,47 +1,143 @@
-<!doctype html><html><head><meta charset="utf-8"><title>{{ quiz.title }} Answer Sheet</title>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ quiz.title }} Answer Sheet</title>
 <style>
-@page{size:{{ paper_size }} portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;font-family:Arial,sans-serif;color:#000}
-.sheet{position:relative;overflow:hidden}
+@page{size:{{ paper_size }} portrait;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:Arial,sans-serif;color:#000}
+.sheet{position:relative;overflow:hidden;background:#fff}
+.marker{position:absolute;width:6mm;height:6mm;background:#000}
 {% if paper_size == "SHORT" %}
-@page{size:215.9mm 279.4mm;margin:0}html,body,.sheet{width:215.9mm;height:279.4mm}.marker{width:5mm;height:5mm;background:#000;position:absolute}
-.tl{left:5mm;top:5mm}.tr{left:205.9mm;top:5mm}.bl{left:5mm;top:264.4mm}.br{left:205.9mm;top:264.4mm}
+@page{size:215.9mm 279.4mm}
+html,body,.sheet{width:215.9mm;height:279.4mm}
+.marker{width:5mm;height:5mm}
+.tl{left:5mm;top:5mm}.tr{right:5mm;top:5mm}.bl{left:5mm;bottom:10mm}.br{right:5mm;bottom:10mm}
 h1{position:absolute;top:8mm;left:0;width:215.9mm;text-align:center;font-size:15pt;margin:0}
-.meta{position:absolute;top:17mm;left:22mm;font-size:9pt}.meta .name-label{font-weight:600}.line{display:inline-block;width:60mm;border-bottom:.3mm solid #000}
+.meta{position:absolute;top:17mm;left:22mm;font-size:9pt}.name-label{font-weight:600}.line{display:inline-block;border-bottom:.3mm solid #000}
 .instructions{position:absolute;top:31mm;left:22mm;font-size:8pt}
-.omrgrid{position:absolute;top:36mm;left:12mm;width:110mm;display:grid;grid-template-columns:36mm 36mm 36mm;column-gap:0}
-.qcol{position:relative;width:36mm}.qcol:nth-child(1){margin-left:2mm}.qcol:nth-child(2){margin-left:2.3mm}.qcol:nth-child(3){margin-left:2.2mm}.choice-header{height:4.5mm;display:grid;grid-template-columns:8mm repeat(5,5.8mm);column-gap:.5mm;font-size:7pt;font-weight:bold;text-align:center;align-items:center}.row{position:relative;height:7.25mm}.row .number{position:absolute;left:0;top:1mm;width:7mm;text-align:right;font-size:8pt}.bubble{position:absolute;top:.65mm;width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%}.b1{left:6.6mm}.b2{left:12.3mm}.b3{left:18.2mm}.b4{left:24.1mm}.b5{left:29.7mm}.qcol:nth-child(2) .b1{left:6mm}.qcol:nth-child(2) .b2{left:11.8mm}.qcol:nth-child(2) .b3{left:17.7mm}.qcol:nth-child(2) .b4{left:23.5mm}.qcol:nth-child(2) .b5{left:29.2mm}.qcol:nth-child(3) .b1{left:6mm}.qcol:nth-child(3) .b2{left:11.8mm}.qcol:nth-child(3) .b3{left:17.6mm}.qcol:nth-child(3) .b4{left:23.4mm}.qcol:nth-child(3) .b5{left:29.1mm}.row .anchor{display:block;position:absolute;left:2.5mm;top:1.2mm;width:4mm;height:4mm;background:#000;border-radius:50%}.qcol .row:nth-of-type(12){margin-top:7.5mm}.footer{position:absolute;bottom:6mm;left:0;width:215.9mm;text-align:center;font-size:7pt}
-.side-label{position:absolute;font-weight:bold;font-size:10pt;letter-spacing:.5px}.zip{left:3mm;top:66mm;writing-mode:vertical-rl;transform:rotate(180deg)}.me{right:3mm;top:86mm;writing-mode:vertical-rl}.src{right:3mm;top:147mm;writing-mode:vertical-rl}.code{right:4mm;top:43mm;writing-mode:vertical-rl}
+.omrgrid{position:absolute;top:36mm;left:12mm;width:110mm;display:grid;grid-template-columns:36mm 36mm 36mm}
+.qcol{position:relative;width:36mm}.qcol:nth-child(1){margin-left:2mm}.qcol:nth-child(2){margin-left:2.3mm}.qcol:nth-child(3){margin-left:2.2mm}
+.choice-header{height:4.5mm;display:grid;grid-template-columns:8mm repeat(5,5.8mm);column-gap:.5mm;font-size:7pt;font-weight:bold;text-align:center;align-items:center}
+.row{position:relative;height:7.25mm}.row .number{position:absolute;left:0;top:1mm;width:7mm;text-align:right;font-size:8pt}
+.bubble{position:absolute;top:.65mm;width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%}
+.b1{left:6.6mm}.b2{left:12.3mm}.b3{left:18.2mm}.b4{left:24.1mm}.b5{left:29.7mm}
+.qcol:nth-child(2) .b1{left:6mm}.qcol:nth-child(2) .b2{left:11.8mm}.qcol:nth-child(2) .b3{left:17.7mm}.qcol:nth-child(2) .b4{left:23.5mm}.qcol:nth-child(2) .b5{left:29.2mm}
+.qcol:nth-child(3) .b1{left:6mm}.qcol:nth-child(3) .b2{left:11.8mm}.qcol:nth-child(3) .b3{left:17.6mm}.qcol:nth-child(3) .b4{left:23.4mm}.qcol:nth-child(3) .b5{left:29.1mm}
+.row .anchor{position:absolute;left:2.5mm;top:1.2mm;width:4mm;height:4mm;background:#000;border-radius:50%}
+.qcol .row:nth-of-type(12){margin-top:7.5mm}.footer{position:absolute;bottom:6mm;left:0;width:215.9mm;text-align:center;font-size:7pt}
+.side-label{position:absolute;font-weight:bold;font-size:10pt;letter-spacing:.5px}.me{right:3mm;top:86mm;writing-mode:vertical-rl}.src{right:3mm;top:147mm;writing-mode:vertical-rl}.code{right:4mm;top:43mm;writing-mode:vertical-rl}
 
 {% elif paper_size == "HALF_LETTER" %}
-@page{size:139.7mm 215.9mm;margin:0}html,body,.sheet{width:139.7mm;height:215.9mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:5mm;top:5mm}.tr{left:128.7mm;top:5mm}.bl{left:5mm;top:204.9mm}.br{left:128.7mm;top:204.9mm}
-h1{position:absolute;top:18mm;left:0;width:139.7mm;text-align:center;font-size:12pt;margin:0}.meta{position:absolute;top:29mm;left:16mm;font-size:7pt}.line{display:inline-block;width:38mm;border-bottom:.3mm solid #000}.instructions{position:absolute;top:37mm;left:16mm;font-size:6.5pt}
-.column{position:absolute;top:49mm;left:49mm;width:40mm}.choice-header{position:absolute;top:-4mm;left:0;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);text-align:center;font-size:7pt;font-weight:bold}.row{height:6.4mm;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);align-items:center}.bubble{width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%;margin:auto}.number{position:absolute;width:8mm;text-align:right;left:-9mm;font-size:6.5pt}.footer{position:absolute;bottom:5mm;left:0;width:139.7mm;text-align:center;font-size:6pt}
+@page{size:139.7mm 215.9mm}
+html,body,.sheet{width:139.7mm;height:215.9mm}
+.tl{left:5mm;top:5mm}.tr{right:5mm;top:5mm}.bl{left:5mm;bottom:5mm}.br{right:5mm;bottom:5mm}
+h1{position:absolute;top:18mm;left:0;width:139.7mm;text-align:center;font-size:12pt;margin:0}
+.meta{position:absolute;top:29mm;left:12mm;font-size:7pt}.line{display:inline-block;border-bottom:.3mm solid #000}
+.instructions{position:absolute;top:37mm;left:12mm;font-size:6.5pt}
+.column{position:absolute;top:49mm;left:41mm;width:50mm}
+.choice-header{height:4mm;display:grid;grid-template-columns:repeat(5,10mm);text-align:center;font-size:7pt;font-weight:bold}
+.row{height:6.4mm;width:50mm;display:grid;grid-template-columns:repeat(5,10mm);align-items:center}
+.bubble{position:static;width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%;margin:auto}
+.number{position:absolute;width:8mm;text-align:right;left:-9mm;font-size:6.5pt}
+.footer{position:absolute;bottom:5mm;left:0;width:139.7mm;text-align:center;font-size:6pt}
 
 {% elif paper_size == "LEGAL" %}
-@page{size:215.9mm 355.6mm;margin:0}html,body,.sheet{width:215.9mm;height:355.6mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:7mm;top:7mm}.tr{right:7mm;top:7mm}.bl{left:7mm;bottom:7mm}.br{right:7mm;bottom:7mm}
-h1{position:absolute;top:10mm;left:0;width:215.9mm;text-align:center;font-size:15pt;margin:0}.meta{position:absolute;top:20mm;left:22mm;font-size:9pt}.instructions{position:absolute;top:34mm;left:22mm;font-size:8pt}
-.legalgrid{position:absolute;top:45mm;left:18mm;width:180mm;display:grid;grid-template-columns:repeat(4,40mm);column-gap:5mm}.legalcol{width:40mm}.choice-header{height:5mm;display:grid;grid-template-columns:9mm repeat(4,7.3mm);column-gap:.4mm;font-size:7pt;align-items:center}.legalrow{height:7.55mm;position:relative}.legalrow .number{left:0;top:1mm;width:8mm;font-size:7.5pt}.legalrow .bubble{top:.8mm;width:5.8mm;height:5.8mm}.lb1{left:9.1mm}.lb2{left:16.5mm}.lb3{left:23.9mm}.lb4{left:31.2mm}.legal-footer{position:absolute;bottom:8mm;left:0;width:215.9mm;text-align:center;font-size:7pt}
+@page{size:215.9mm 355.6mm}
+html,body,.sheet{width:215.9mm;height:355.6mm}
+.tl{left:7mm;top:7mm}.tr{right:7mm;top:7mm}.bl{left:7mm;bottom:10mm}.br{right:7mm;bottom:10mm}
+h1{position:absolute;top:10mm;left:0;width:215.9mm;text-align:center;font-size:15pt;margin:0}
+.meta{position:absolute;top:20mm;left:22mm;font-size:9pt}.line{display:inline-block;border-bottom:.3mm solid #000}
+.instructions{position:absolute;top:34mm;left:22mm;font-size:8pt}
+.legalgrid{position:absolute;top:45mm;left:16.5mm;width:180mm;display:grid;grid-template-columns:repeat(4,45mm)}
+.legalcol{width:45mm}.choice-header{height:5mm;display:grid;grid-template-columns:8mm repeat(5,6.8mm);font-size:7pt;font-weight:bold;align-items:center;text-align:center}
+.legalrow{height:7.55mm;position:relative}.legalrow .number{position:absolute;left:0;top:1mm;width:7mm;font-size:7.5pt;text-align:right}
+.legalrow .bubble{position:absolute;top:.9mm;width:5.8mm;height:5.8mm;border:.3mm solid #000;border-radius:50%}
+.lb1{left:8.0mm}.lb2{left:14.8mm}.lb3{left:21.6mm}.lb4{left:28.4mm}.lb5{left:35.2mm}
+.legal-footer{position:absolute;bottom:8mm;left:0;width:215.9mm;text-align:center;font-size:7pt}
+
 {% else %}
-@page{size:210mm 297mm;margin:0}html,body,.sheet{width:210mm;height:297mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:7mm;top:7mm}.tr{right:7mm;top:7mm}.bl{left:7mm;bottom:7mm}.br{right:7mm;bottom:7mm}
-h1{position:absolute;top:10mm;left:0;width:210mm;text-align:center;font-size:15pt;margin:0}.meta{position:absolute;top:20mm;left:22mm;font-size:9pt}.instructions{position:absolute;top:34mm;left:22mm;font-size:8pt}
-.a4grid{position:absolute;top:45mm;left:38mm;width:135mm;display:grid;grid-template-columns:40mm 40mm;column-gap:50mm}.a4col{width:40mm}.choice-header{height:5mm;display:grid;grid-template-columns:10mm repeat(4,7.5mm);font-size:8pt;align-items:center}.a4row{height:8mm;position:relative}.a4row .number{left:0;top:1mm;width:9mm;font-size:8pt}.a4row .bubble{top:.65mm;width:7mm;height:7mm}.ab1{left:10.2mm}.ab2{left:17.7mm}.ab3{left:25.2mm}.ab4{left:32.7mm}.a4-timing{position:absolute;width:4mm;height:2mm;background:#000;left:7mm}.a4-footer{position:absolute;bottom:8mm;left:0;width:210mm;text-align:center;font-size:7pt}@media print{.no-print{display:none}}
-{% endif %}</style></head><body><div class="sheet">
+@page{size:210mm 297mm}
+html,body,.sheet{width:210mm;height:297mm}
+.tl{left:7mm;top:7mm}.tr{right:7mm;top:7mm}.bl{left:7mm;bottom:10mm}.br{right:7mm;bottom:10mm}
+h1{position:absolute;top:10mm;left:0;width:210mm;text-align:center;font-size:15pt;margin:0}
+.meta{position:absolute;top:20mm;left:22mm;font-size:9pt}.line{display:inline-block;border-bottom:.3mm solid #000}
+.instructions{position:absolute;top:34mm;left:22mm;font-size:8pt}
+.a4grid{position:absolute;top:45mm;left:30mm;width:140mm;display:grid;grid-template-columns:50mm 50mm;column-gap:40mm}
+.a4col{width:50mm}.choice-header{height:5mm;display:grid;grid-template-columns:10mm repeat(5,7mm);font-size:8pt;font-weight:bold;align-items:center;text-align:center}
+.a4row{height:7.8mm;position:relative}.a4row .number{position:absolute;left:0;top:1mm;width:9mm;font-size:8pt;text-align:right}
+.a4row .bubble{position:absolute;top:.7mm;width:6.2mm;height:6.2mm;border:.3mm solid #000;border-radius:50%}
+.ab1{left:10.15mm}.ab2{left:17.15mm}.ab3{left:24.15mm}.ab4{left:31.15mm}.ab5{left:38.15mm}
+.a4-footer{position:absolute;bottom:8mm;left:0;width:210mm;text-align:center;font-size:7pt}
+{% endif %}
+@media print{.no-print{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
 <div class="marker tl"></div><div class="marker tr"></div><div class="marker bl"></div><div class="marker br"></div>
-<h1>{{ quiz.title }}</h1><div class="meta"><span class="name-label">Name (Last, First MI):</span> <span class="line" style="width:62mm"></span>&nbsp;&nbsp;&nbsp;<span class="name-label">CourseYrSec:</span> <span class="line" style="width:42mm"></span><br><span class="name-label">Date(MM/DD/YY):</span> <span class="line" style="width:48mm"></span></div>
-<div class="instructions">Shade ONE bubble completely. Do not mark more than one. Print at 100% / Actual Size.</div>
-{% if paper_size == "SHORT" %}
-<div class="side-label code">(1370)</div><div class="side-label me">ME</div><div class="side-label src">SRC</div>
-<div class="omrgrid">
-<div class="qcol"><div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>{% for q in quiz.questions.all %}{% if q.number <= 20 %}<div class="row"><span class="number">{{ q.number }}</span><span class="anchor"></span><span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span><span class="bubble b4"></span><span class="bubble b5"></span></div>{% endif %}{% endfor %}</div>
-<div class="qcol"><div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>{% for q in quiz.questions.all %}{% if q.number > 20 and q.number <= 40 %}<div class="row"><span class="number">{{ q.number }}</span><span class="anchor"></span><span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span><span class="bubble b4"></span><span class="bubble b5"></span></div>{% endif %}{% endfor %}</div>
-<div class="qcol"><div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>{% for q in quiz.questions.all %}{% if q.number > 40 and q.number <= 60 %}<div class="row"><span class="number">{{ q.number }}</span><span class="anchor"></span><span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span><span class="bubble b4"></span><span class="bubble b5"></span></div>{% endif %}{% endfor %}</div>
+<h1>{{ quiz.title }}</h1>
+<div class="meta">
+<span class="name-label">Name (Last, First MI):</span> <span class="line" style="width:62mm"></span>
+&nbsp;&nbsp;&nbsp;<span class="name-label">CourseYrSec:</span> <span class="line" style="width:42mm"></span><br>
+<span class="name-label">Date(MM/DD/YY):</span> <span class="line" style="width:48mm"></span>
 </div>
-<div class="footer">Short Bond OMR • 60 questions • Five choices (A–E)</div>{% elif paper_size == "HALF_LETTER" %}
-<div class="column"><div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if q.number <= 25 %}<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>{% endif %}{% endfor %}</div>
-<div class="footer">Half Letter OMR • Up to 25 questions • Four registration markers</div>
+<div class="instructions">Shade ONE bubble completely. Use only one answer per question. Print at 100% / Actual Size.</div>
+
+{% if paper_size == "SHORT" %}
+<div class="side-label me">ME</div><div class="side-label src">SRC</div><div class="side-label code">(1370)</div>
+<div class="omrgrid">
+{% for start in "123" %}
+<div class="qcol">
+<div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>
+{% for q in quiz.questions.all %}
+{% if start == "1" and q.number <= 20 or start == "2" and q.number > 20 and q.number <= 40 or start == "3" and q.number > 40 and q.number <= 60 %}
+<div class="row"><span class="number">{{ q.number }}</span><span class="anchor"></span><span class="bubble b1"></span><span class="bubble b2"></span><span class="bubble b3"></span><span class="bubble b4"></span><span class="bubble b5"></span></div>
+{% endif %}{% endfor %}
+</div>
+{% endfor %}
+</div>
+<div class="footer">Short Bond OMR • Up to 60 questions • Five choices (A–E)</div>
+
+{% elif paper_size == "HALF_LETTER" %}
+<div class="column">
+<div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>
+{% for q in quiz.questions.all %}{% if q.number <= 25 %}
+<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>
+{% endif %}{% endfor %}
+</div>
+<div class="footer">Half Letter OMR • Up to 25 questions • Five choices (A–E)</div>
+
 {% elif paper_size == "LEGAL" %}
-<div class="legalgrid">{% for start in "1234" %}<div class="legalcol"><div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if start == "1" and q.number <= 25 or start == "2" and q.number > 25 and q.number <= 50 or start == "3" and q.number > 50 and q.number <= 75 or start == "4" and q.number > 75 and q.number <= 100 %}<div class="legalrow"><span class="number">{{ q.number }}</span><span class="bubble lb1"></span><span class="bubble lb2"></span><span class="bubble lb3"></span><span class="bubble lb4"></span></div>{% endif %}{% endfor %}</div>{% endfor %}</div><div class="legal-footer">Legal OMR • Up to 100 questions • Four choices (A–D)</div>
+<div class="legalgrid">
+{% for start in "1234" %}
+<div class="legalcol">
+<div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>
+{% for q in quiz.questions.all %}
+{% if start == "1" and q.number <= 25 or start == "2" and q.number > 25 and q.number <= 50 or start == "3" and q.number > 50 and q.number <= 75 or start == "4" and q.number > 75 and q.number <= 100 %}
+<div class="legalrow"><span class="number">{{ q.number }}</span><span class="bubble lb1"></span><span class="bubble lb2"></span><span class="bubble lb3"></span><span class="bubble lb4"></span><span class="bubble lb5"></span></div>
+{% endif %}{% endfor %}
+</div>
+{% endfor %}
+</div>
+<div class="legal-footer">Legal OMR • Up to 100 questions • Five choices (A–E)</div>
+
 {% else %}
-{% for n in "12345678901234567890" %}<div class="a4-timing" style="top:{{ forloop.counter|add:"44" }}mm"></div>{% endfor %}
-<div class="a4grid">{% for start in "12" %}<div class="a4col"><div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if start == "1" and q.number <= 25 or start == "2" and q.number > 25 and q.number <= 50 %}<div class="a4row"><span class="number">{{ q.number }}</span><span class="bubble ab1"></span><span class="bubble ab2"></span><span class="bubble ab3"></span><span class="bubble ab4"></span></div>{% endif %}{% endfor %}</div>{% endfor %}</div><div class="a4-footer">A4 OMR • Up to 50 questions • Four choices (A–D)</div>{% endif %}</div>
-<div class="no-print" style="position:fixed;right:10px;top:10px"><button onclick="window.print()">Print</button></div></body></html>
+<div class="a4grid">
+{% for start in "12" %}
+<div class="a4col">
+<div class="choice-header"><span></span><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>
+{% for q in quiz.questions.all %}
+{% if start == "1" and q.number <= 25 or start == "2" and q.number > 25 and q.number <= 50 %}
+<div class="a4row"><span class="number">{{ q.number }}</span><span class="bubble ab1"></span><span class="bubble ab2"></span><span class="bubble ab3"></span><span class="bubble ab4"></span><span class="bubble ab5"></span></div>
+{% endif %}{% endfor %}
+</div>
+{% endfor %}
+</div>
+<div class="a4-footer">A4 OMR • Up to 50 questions • Five choices (A–E)</div>
+{% endif %}
+</div>
+<div class="no-print" style="position:fixed;right:10px;top:10px"><button onclick="window.print()">Print</button></div>
+</body>
+</html>
