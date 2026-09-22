@@ -16,6 +16,13 @@ PAPER_CONFIG={
                         {"A":58.9,"B":64.7,"C":70.6,"D":76.4,"E":82.1},
                         {"A":94.8,"B":100.6,"C":106.4,"D":112.2,"E":117.9}],
              "max_questions":60},
+    "LEGAL":{"canvas":(2550,4200),"markers":[(7,7),(209,7),(209,348.6),(7,348.6)],
+             "first_y":48.8,"row_spacing":7.55,"sample_radius":20,
+             "columns":[{"A":30.1,"B":37.5,"C":44.9,"D":52.2},
+                        {"A":70.1,"B":77.5,"C":84.9,"D":92.2},
+                        {"A":110.1,"B":117.5,"C":124.9,"D":132.2},
+                        {"A":150.1,"B":157.5,"C":164.9,"D":172.2}],
+             "max_questions":100},
     "HALF_LETTER":{"canvas":(1650,2550),"markers":[(8,8),(132,8),(132,208),(8,208)],
              "first_y":52.2,"row_spacing":6.4,"sample_radius":20,
              "left_x":{"A":54,"B":64,"C":74,"D":84},"right_x":{"A":54,"B":64,"C":74,"D":84},
@@ -43,6 +50,11 @@ def bubble_center(question_number,choice,paper_size="A4"):
     key,c=_config(paper_size)
     if not 1<=question_number<=c["max_questions"] or choice not in CHOICES:
         raise ValueError("Invalid OMR coordinate.")
+    if key == "LEGAL":
+        group=(question_number-1)//25
+        row=(question_number-1)%25
+        xs=c["columns"][group]
+        return mm_to_px(xs[choice]),mm_to_px(c["first_y"]+row*c["row_spacing"])
     if key == "SHORT":
         group=(question_number-1)//20
         row=(question_number-1)%20
