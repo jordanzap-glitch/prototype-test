@@ -11,6 +11,12 @@ h1{position:absolute;top:25mm;left:0;width:215.9mm;text-align:center;font-size:1
 .column{position:absolute;top:58mm;left:83mm;width:40mm}.choice-header{position:absolute;top:-5mm;left:0;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);text-align:center;font-size:8pt;font-weight:bold}
 .row{height:7.4mm;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);align-items:center}.bubble{width:6.5mm;height:6.5mm;border:.35mm solid #000;border-radius:50%;margin:auto}
 .number{position:absolute;width:9mm;text-align:right;left:-10mm;font-size:8pt}.footer{position:absolute;bottom:7mm;left:0;width:215.9mm;text-align:center;font-size:7pt}
+
+{% elif paper_size == "HALF_LETTER" %}
+html,body,.sheet{width:139.7mm;height:215.9mm}.marker{position:absolute;width:6mm;height:6mm;background:#000}.tl{left:5mm;top:5mm}.tr{left:128.7mm;top:5mm}.bl{left:5mm;top:204.9mm}.br{left:128.7mm;top:204.9mm}
+h1{position:absolute;top:18mm;left:0;width:139.7mm;text-align:center;font-size:12pt;margin:0}.meta{position:absolute;top:29mm;left:16mm;font-size:7pt}.line{display:inline-block;width:38mm;border-bottom:.3mm solid #000}.instructions{position:absolute;top:37mm;left:16mm;font-size:6.5pt}
+.column{position:absolute;top:49mm;left:49mm;width:40mm}.choice-header{position:absolute;top:-4mm;left:0;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);text-align:center;font-size:7pt;font-weight:bold}.row{height:6.4mm;width:40mm;display:grid;grid-template-columns:repeat(4,10mm);align-items:center}.bubble{width:5.2mm;height:5.2mm;border:.3mm solid #000;border-radius:50%;margin:auto}.number{position:absolute;width:8mm;text-align:right;left:-9mm;font-size:6.5pt}.footer{position:absolute;bottom:5mm;left:0;width:139.7mm;text-align:center;font-size:6pt}
+
 {% else %}
 html,body,.sheet{width:210mm;height:297mm}.marker{position:absolute;width:8mm;height:8mm;background:#000}.tl{left:10mm;top:10mm}.tr{left:192mm;top:10mm}.bl{left:10mm;top:279mm}.br{left:192mm;top:279mm}
 h1{position:absolute;top:31mm;left:0;width:210mm;text-align:center;font-size:16pt;margin:0}.meta{position:absolute;top:43mm;left:25mm;font-size:10pt}.line{display:inline-block;width:60mm;border-bottom:.3mm solid #000}.instructions{position:absolute;top:52mm;left:25mm;font-size:8pt}
@@ -23,6 +29,9 @@ h1{position:absolute;top:31mm;left:0;width:210mm;text-align:center;font-size:16p
 {% if paper_size == "SHORT" %}
 <div class="column"><div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if q.number <= 25 %}<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>{% endif %}{% endfor %}</div>
 <div class="footer">Short Bond OMR • Up to 25 questions • Four registration markers</div>
+{% elif paper_size == "HALF_LETTER" %}
+<div class="column"><div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if q.number <= 25 %}<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>{% endif %}{% endfor %}</div>
+<div class="footer">Half Letter OMR • Up to 25 questions • Four registration markers</div>
 {% else %}
 <div class="column left"><div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if q.number <= 25 %}<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>{% endif %}{% endfor %}</div>
 <div class="column right"><div class="choice-header"><span>A</span><span>B</span><span>C</span><span>D</span></div>{% for q in quiz.questions.all %}{% if q.number > 25 %}<div class="row"><span class="number">{{ q.number|stringformat:"02d" }}</span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span><span class="bubble"></span></div>{% endif %}{% endfor %}</div>
