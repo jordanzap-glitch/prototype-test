@@ -10,10 +10,11 @@ PAPER_CONFIG={
           "first_y":75,"row_spacing":8,"sample_radius":24,
           "left_x":{"A":45,"B":55,"C":65,"D":75},"right_x":{"A":135,"B":145,"C":155,"D":165},
           "max_questions":50},
-    "SHORT":{"canvas":(2550,3300),"markers":[(12,12),(203.9,12),(203.9,267.4),(12,267.4)],
-             "first_y":38.8,"row_spacing":8.05,"sample_radius":20,
-             "left_x":{"A":22.6,"B":28.3,"C":33.9,"D":39.5,"E":45.1},
-             "right_x":{"A":57.8,"B":63.4,"C":69.0,"D":74.6,"E":80.2},
+    "SHORT":{"canvas":(2550,3300),"markers":[(7.5,7.5),(208.4,7.5),(208.4,267),(7.5,267)],
+             "first_y":37.9,"row_spacing":7.25,"second_gap":7.5,"sample_radius":20,
+             "columns":[{"A":23.2,"B":28.9,"C":34.8,"D":40.7,"E":46.3},
+                        {"A":58.9,"B":64.7,"C":70.6,"D":76.4,"E":82.1},
+                        {"A":94.8,"B":100.6,"C":106.4,"D":112.2,"E":117.9}],
              "max_questions":60},
     "HALF_LETTER":{"canvas":(1650,2550),"markers":[(8,8),(132,8),(132,208),(8,208)],
              "first_y":52.2,"row_spacing":6.4,"sample_radius":20,
@@ -44,11 +45,16 @@ def bubble_center(question_number,choice,paper_size="A4"):
     if key == "SHORT":
         group=(question_number-1)//20
         row=(question_number-1)%20
-        xs={"left_x":c["left_x"],"middle_x":c["right_x"],"right_x":{"A":92.4,"B":98.0,"C":103.6,"D":109.2,"E":114.8}}[["left_x","middle_x","right_x"][group]]
+        if row >= 10:
+            y = c["first_y"] + row*c["row_spacing"] + c["second_gap"]
+        else:
+            y = c["first_y"] + row*c["row_spacing"]
+        xs=c["columns"][group]
+        return mm_to_px(xs[choice]),mm_to_px(y)
     else:
         row=question_number-1 if key=="HALF_LETTER" or question_number<=25 else question_number-26
         xs=c["left_x"] if key=="HALF_LETTER" or question_number<=25 else c["right_x"]
-    return mm_to_px(xs[choice]),mm_to_px(c["first_y"]+row*c["row_spacing"])
+        return mm_to_px(xs[choice]),mm_to_px(c["first_y"]+row*c["row_spacing"])
 
 def _marker_centers(paper_size):
     _,c=_config(paper_size)
