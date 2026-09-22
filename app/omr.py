@@ -20,7 +20,8 @@ PAPER_CONFIG={
              "max_questions":25},
 }
 CHOICES=("A","B","C","D")
-MIN_BUBBLE_SCORE=.18
+MIN_BUBBLE_SCORE=.24
+MULTIPLE_RELATIVE_SCORE=.68
 AMBIGUITY_GAP=.07
 MARKER_POSITION_TOLERANCE_PX=30
 
@@ -116,25 +117,37 @@ def _bubble_score(gray,cx,cy,paper_size):
 
     # The printed circle border is dark even when the answer is empty.
     # Sampling the full bubble therefore makes every empty option look marked.
-    # Use the inner ~55% radius so the outline does not affect the score.
-    inner=max(5,int(r*0.55))
+    # Use a small central core. This avoids the printed outline and also
+    # reduces bleed/shadow from a neighboring bubble.
+    inner=max(5,int(r*0.38))
     yy,xx=np.ogrid[-r:r+1,-r:r+1]
     mask=(xx*xx+yy*yy)<=inner*inner
     inner_pixels=roi[mask]
 
-    # Normalize against white paper. Higher = more shaded.
-    darkness=1.0-(float(np.mean(inner_pixels))/255.0)
+    # Use a robust statistic instead of the whole-circle average. Pencil/pen
+    # marks should make the center substantially darker than clean paper.
+    darkness=1.0-(float(np.percentile(inner_pixels,35))/255.0)
     return max(0.0,min(1.0,darkness))
 
 def _read_question(gray,n,paper_size):
     scores={c:round(_bubble_score(gray,*bubble_center(n,c,paper_size),paper_size),4) for c in CHOICES}
     ranked=sorted(scores.items(),key=lambda x:x[1],reverse=True)
+    top,top_score=ranked[0]; second,second_score=ranked[1]
     marked=[c for c,s in ranked if s>=MIN_BUBBLE_SCORE]
-    top,top_score=ranked[0]; second_score=ranked[1][1]
-    if not marked: status,selected,confidence="blank",None,0
-    elif len(marked)>1: status,selected,confidence="multiple",None,min(100,top_score*100)
-    elif top_score-second_score<AMBIGUITY_GAP: status,selected,confidence="unclear",None,max(0,(top_score-second_score)*100)
-    else: status,selected,confidence="detected",top,min(100,(top_score-second_score)*100+top_score*50)
+
+    # A second bubble must be independently strong, not merely above a low
+    # absolute threshold. This prevents light print/shadow/noise in adjacent
+    # bubbles from turning a single marked answer into "multiple".
+    strong=[c for c,s in ranked if s>=MIN_BUBBLE_SCORE and s>=top_score*MULTIPLE_RELATIVE_SCORE]
+
+    if top_score<MIN_BUBBLE_SCORE:
+        status,selected,confidence="blank",None,0
+    elif len(strong)>1:
+        status,selected,confidence="multiple",None,min(100,second_score*100)
+    elif top_score-second_score<AMBIGUITY_GAP:
+        status,selected,confidence="unclear",None,max(0,(top_score-second_score)*100)
+    else:
+        status,selected,confidence="detected",top,min(100,(top_score-second_score)*100+top_score*50)
     return {"selected_choice":selected,"detected_choices":marked,"status":status,
             "confidence":round(confidence,2),"darkness_scores":scores}
 
