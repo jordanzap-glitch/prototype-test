@@ -107,11 +107,24 @@ def _validate_warp(warped,paper_size):
     return round(float(np.mean(scores))*100,2)
 
 def _bubble_score(gray,cx,cy,paper_size):
-    _,c=_config(paper_size); r=c["sample_radius"]
+    """Measure only the inside of a bubble, excluding its outline."""
+    _,c=_config(paper_size)
+    r=c["sample_radius"]
     roi=gray[cy-r:cy+r+1,cx-r:cx+r+1]
-    if roi.size==0:return 0
-    yy,xx=np.ogrid[-r:r+1,-r:r+1]; mask=(xx*xx+yy*yy)<=r*r
-    return float(1-np.mean(roi[mask])/255)
+    if roi.size==0:
+        return 0.0
+
+    # The printed circle border is dark even when the answer is empty.
+    # Sampling the full bubble therefore makes every empty option look marked.
+    # Use the inner ~55% radius so the outline does not affect the score.
+    inner=max(5,int(r*0.55))
+    yy,xx=np.ogrid[-r:r+1,-r:r+1]
+    mask=(xx*xx+yy*yy)<=inner*inner
+    inner_pixels=roi[mask]
+
+    # Normalize against white paper. Higher = more shaded.
+    darkness=1.0-(float(np.mean(inner_pixels))/255.0)
+    return max(0.0,min(1.0,darkness))
 
 def _read_question(gray,n,paper_size):
     scores={c:round(_bubble_score(gray,*bubble_center(n,c,paper_size),paper_size),4) for c in CHOICES}
