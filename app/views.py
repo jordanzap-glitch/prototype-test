@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 from .models import Answer, Quiz, Submission
-from .omr import OMRScanError, scan_answer_sheet
+from .omr import OMRScanError, auto_calibrate, scan_answer_sheet
 
 def _paper_size(request):
     value=str(request.GET.get("size") or request.POST.get("paper_size") or "A4").upper()
@@ -52,6 +52,39 @@ def camera_submit(request,quiz_id):
     submission.status=Submission.STATUS_REVIEW if result["needs_review"] else Submission.STATUS_GRADED
     submission.scan_message=result["message"]; submission.save(update_fields=["score","total_items","percentage","geometry_confidence","status","scan_message"])
     return JsonResponse({"ok":True,"submission_id":submission.id,"redirect_url":f"/submission/{submission.id}/result/"})
+
+@require_POST
+def camera_calibrate(request,quiz_id):
+    """Return automatic paper calibration data for the live camera."""
+    quiz=get_object_or_404(Quiz,pk=quiz_id)
+    paper_size=_paper_size(request)
+    image=request.FILES.get("image")
+    if not isinstance(image,UploadedFile):
+        return JsonResponse({"ok":False,"error":"No camera image was uploaded."},status=400)
+    if image.size>15*1024*1024:
+        return JsonResponse({"ok":False,"error":"Image is too large. Maximum is 15 MB."},status=400)
+
+    import cv2
+    import numpy as np
+    data=np.frombuffer(image.read(),dtype=np.uint8)
+    frame=cv2.imdecode(data,cv2.IMREAD_COLOR)
+    if frame is None:
+        return JsonResponse({"ok":False,"error":"Camera image could not be decoded."},status=400)
+
+    try:
+        result=auto_calibrate(frame,paper_size)
+    except OMRScanError as exc:
+        return JsonResponse({"ok":False,"calibrated":False,"error":str(exc)},status=422)
+
+    return JsonResponse({
+        "ok":True,
+        "calibrated":True,
+        "paper_size":result["paper_size"],
+        "confidence":result["confidence"],
+        "mean_error_px":result["mean_error_px"],
+        "max_error_px":result["max_error_px"],
+        "canonical_size":result["canonical_size"],
+    })
 
 def result(request,submission_id):
     submission=get_object_or_404(Submission.objects.select_related("quiz").prefetch_related("answers__question"),pk=submission_id)
