@@ -22,6 +22,7 @@ PAPER_CONFIG={
              "max_questions":25},
 }
 CHOICES=("A","B","C","D","E")
+FOUR_CHOICES=("A","B","C","D")
 MIN_BUBBLE_SCORE=.24
 MULTIPLE_RELATIVE_SCORE=.68
 AMBIGUITY_GAP=.07
@@ -142,7 +143,9 @@ def _bubble_score(gray,cx,cy,paper_size):
     return max(0.0,min(1.0,darkness))
 
 def _read_question(gray,n,paper_size):
-    scores={c:round(_bubble_score(gray,*bubble_center(n,c,paper_size),paper_size),4) for c in CHOICES}
+    key,_=_config(paper_size)
+    choices=CHOICES if key=="SHORT" else FOUR_CHOICES
+    scores={c:round(_bubble_score(gray,*bubble_center(n,c,paper_size),paper_size),4) for c in choices}
     ranked=sorted(scores.items(),key=lambda x:x[1],reverse=True)
     top,top_score=ranked[0]; second,second_score=ranked[1]
     marked=[c for c,s in ranked if s>=MIN_BUBBLE_SCORE]
