@@ -4,11 +4,13 @@ import pytest
 from pathlib import Path
 from django.test import TestCase
 from app.models import Quiz, Question
-from app.omr import OMRScanError, bubble_center, scan_answer_sheet, CANVAS_SIZE, MARKER_CENTERS, mm_to_px
+from app.omr import OMRScanError, bubble_center, scan_answer_sheet, PAPER_CONFIG, _marker_centers, mm_to_px
 
 def synthetic_sheet(fill=None, multiple=None, blur=0, glare=False):
-    img=np.full((CANVAS_SIZE[1],CANVAS_SIZE[0],3),255,np.uint8)
-    for x,y in MARKER_CENTERS:
+    cfg=PAPER_CONFIG["A4"]
+    canvas=cfg["canvas"]
+    img=np.full((canvas[1],canvas[0],3),255,np.uint8)
+    for x,y in _marker_centers("A4"):
         x,y=int(x),int(y); cv2.rectangle(img,(x-28,y-28),(x+28,y+28),(0,0,0),-1)
     for q in range(1,51):
         for choice in "ABCD":
