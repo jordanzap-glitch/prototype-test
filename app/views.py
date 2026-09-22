@@ -8,7 +8,7 @@ from .omr import OMRScanError, scan_answer_sheet
 
 def _paper_size(request):
     value=str(request.GET.get("size") or request.POST.get("paper_size") or "A4").upper()
-    return value if value in {"A4","SHORT","HALF_LETTER"} else "A4"
+    return value if value in {"A4","SHORT","HALF_LETTER","LEGAL"} else "A4"
 
 def home(request):
     quizzes=Quiz.objects.filter(is_active=True).prefetch_related("questions")
