@@ -14,6 +14,10 @@ PAPER_CONFIG={
              "first_y":58,"row_spacing":7.4,"sample_radius":24,
              "left_x":{"A":73,"B":83,"C":93,"D":103},"right_x":{"A":73,"B":83,"C":93,"D":103},
              "max_questions":25},
+    "HALF_LETTER":{"canvas":(1650,2550),"markers":[(8,8),(132,8),(132,208),(8,208)],
+             "first_y":55,"row_spacing":6.4,"sample_radius":20,
+             "left_x":{"A":53,"B":63,"C":73,"D":83},"right_x":{"A":53,"B":63,"C":73,"D":83},
+             "max_questions":25},
 }
 CHOICES=("A","B","C","D")
 MIN_BUBBLE_SCORE=.18
@@ -25,6 +29,7 @@ class OMRScanError(Exception): pass
 def _config(paper_size):
     key=str(paper_size or "A4").upper()
     if key in {"SHORT BOND","SHORT_BOND","LETTER"}: key="SHORT"
+    if key in {"HALF LETTER","HALF-LETTER","HALF_LETTER","HALF"}: key="HALF_LETTER"
     if key not in PAPER_CONFIG: raise OMRScanError("Unsupported answer-sheet size.")
     return key,PAPER_CONFIG[key]
 
@@ -34,8 +39,8 @@ def bubble_center(question_number,choice,paper_size="A4"):
     key,c=_config(paper_size)
     if not 1<=question_number<=c["max_questions"] or choice not in CHOICES:
         raise ValueError("Invalid OMR coordinate.")
-    row=question_number-1 if key=="SHORT" or question_number<=25 else question_number-26
-    xs=c["left_x"] if key=="SHORT" or question_number<=25 else c["right_x"]
+    row=question_number-1 if key in {"SHORT","HALF_LETTER"} or question_number<=25 else question_number-26
+    xs=c["left_x"] if key in {"SHORT","HALF_LETTER"} or question_number<=25 else c["right_x"]
     return mm_to_px(xs[choice]),mm_to_px(c["first_y"]+row*c["row_spacing"])
 
 def _marker_centers(paper_size):
@@ -128,8 +133,8 @@ def scan_answer_sheet(image_path,quiz,paper_size="A4"):
     questions=list(quiz.questions.all())
     if not questions: raise OMRScanError("This quiz has no questions.")
     if len(questions)>c["max_questions"]: raise OMRScanError(f"{key} answer sheet supports at most {c['max_questions']} questions.")
-    if key=="SHORT" and any(q.number>25 for q in questions):
-        raise OMRScanError("Short Bond answer sheets use question numbers 1–25.")
+    if key in {"SHORT","HALF_LETTER"} and any(q.number>25 for q in questions):
+        raise OMRScanError(f"{key} answer sheets use question numbers 1–25.")
     markers=_select_four(_find_marker_candidates(image))
     warped=_warp(image,markers,key)
     geometry_confidence=_validate_warp(warped,key)
