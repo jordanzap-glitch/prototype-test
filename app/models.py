@@ -15,7 +15,7 @@ class Quiz(models.Model):
     def total_questions(self): return self.questions.count()
 
 class Question(models.Model):
-    CHOICES = [("A","A"),("B","B"),("C","C"),("D","D")]
+    CHOICES = [("A","A"),("B","B"),("C","C"),("D","D"),("E","E")]
     quiz = models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name="questions")
     number = models.PositiveIntegerField()
     text = models.TextField()
@@ -23,6 +23,7 @@ class Question(models.Model):
     choice_b = models.CharField(max_length=500)
     choice_c = models.CharField(max_length=500)
     choice_d = models.CharField(max_length=500)
+    choice_e = models.CharField(max_length=500, blank=True, default="")
     correct_choice = models.CharField(max_length=1,choices=CHOICES)
     class Meta:
         ordering = ["number"]
